@@ -60,3 +60,67 @@ fn insert() {
     vec.insert(1, 0);
     assert_eq!(vec, [3, 0, 4, 5]);
 }
+
+#[test]
+fn retain() {
+    let mut s = vec![0, 1, 2, 3].to_owned().offset(1);
+    s.retain(|_| false);
+    assert_eq!(s.origin_vec(), &[0]);
+    assert_eq!(s, []);
+}
+
+#[test]
+fn retain_val() {
+    let mut s = "foo".to_owned().offset(1);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "f");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val2() {
+    let mut s = "foo".to_owned().offset(2);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "fo");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val3() {
+    let mut s = "foo".to_owned().offset(3);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "foo");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val_fat_zero() {
+    let mut s = "测试中".to_owned().offset(0);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val_fat() {
+    let mut s = "测试中".to_owned().offset(3);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "测");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val_fat1() {
+    let mut s = "测试中".to_owned().offset(6);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "测试");
+    assert_eq!(s, "");
+}
+
+#[test]
+fn retain_val_fat2() {
+    let mut s = "测试中".to_owned().offset(9);
+    s.retain_val(|_| false);
+    assert_eq!(s.origin_vec(), "测试中");
+    assert_eq!(s, "");
+}

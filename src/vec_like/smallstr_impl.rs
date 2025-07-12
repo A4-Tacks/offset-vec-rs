@@ -130,9 +130,15 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
     }
 }
 impl<A: Array<Item = u8>> VecLikeAbstract for SmallString<A> {
+    type Indices<'a> = core::str::CharIndices<'a> where A: 'a;
+
     fn retain<F>(&mut self, f: F)
     where F: FnMut(Self::Elem) -> bool,
     {
         self.retain(f);
+    }
+
+    fn elem_indices(&self) -> Self::Indices<'_> {
+        self.char_indices()
     }
 }

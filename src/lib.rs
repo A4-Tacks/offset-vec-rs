@@ -276,12 +276,15 @@ impl<V: VecLike> OffsetVec<V> {
 }
 
 impl<V: VecLikeSolid> OffsetVec<V> {
-    pub fn retain<F: FnMut(&V::Elem) -> bool>(&mut self, f: F) {
-        self.vec.retain(f);
+    pub fn retain<F: FnMut(&V::Elem) -> bool>(&mut self, mut f: F) {
+        self.retain_mut(|elem| f(&*elem));
     }
 
-    pub fn retain_mut<F: FnMut(&mut V::Elem) -> bool>(&mut self, f: F) {
-        self.vec.retain_mut(f);
+    pub fn retain_mut<F: FnMut(&mut V::Elem) -> bool>(&mut self, mut f: F) {
+        let mut i = 0..self.offset;
+        self.vec.retain_mut(|elem| {
+            i.next().is_some() || f(elem)
+        });
     }
 
     #[track_caller]
@@ -305,8 +308,15 @@ impl<V: VecLikeSolid> OffsetVec<V> {
 }
 
 impl<V: VecLikeAbstract> OffsetVec<V> {
-    pub fn retain_val<F: FnMut(V::Elem) -> bool>(&mut self, f: F) {
-        self.vec.retain(f);
+    pub fn retain_val<F: FnMut(V::Elem) -> bool>(&mut self, mut f: F) {
+        let Some(i) = self.vec.elem_indices()
+            .position(|(i, _)| i >= self.offset)
+        else { return };
+
+        let mut i = 0..i;
+        self.vec.retain(|elem| {
+            i.next().is_some() || f(elem)
+        });
     }
 }
 

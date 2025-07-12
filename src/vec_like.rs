@@ -104,6 +104,10 @@ pub trait VecLikeSolid: VecLike {
 }
 
 pub trait VecLikeAbstract: VecLike {
+    type Indices<'a>: Iterator<Item = (usize, Self::Elem)> where Self: 'a;
+
     fn retain<F>(&mut self, f: F)
     where F: FnMut(Self::Elem) -> bool,;
+
+    fn elem_indices(&self) -> Self::Indices<'_>;
 }

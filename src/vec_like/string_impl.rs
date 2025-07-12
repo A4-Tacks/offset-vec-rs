@@ -1,4 +1,4 @@
-use core::{iter::{repeat_n, repeat_with}, ops::RangeBounds};
+use core::{iter::{repeat_n, repeat_with}, ops::RangeBounds, str::CharIndices};
 use alloc::string::{Drain, String};
 use super::*;
 
@@ -122,9 +122,15 @@ impl VecLike for String {
     }
 }
 impl VecLikeAbstract for String {
+    type Indices<'a> = CharIndices<'a>;
+
     fn retain<F>(&mut self, f: F)
     where F: FnMut(Self::Elem) -> bool,
     {
         self.retain(f);
+    }
+
+    fn elem_indices(&self) -> Self::Indices<'_> {
+        self.char_indices()
     }
 }
