@@ -100,6 +100,7 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
         }
     }
 
+    // FIXME: Replace to unimplemented smallstr::drain_range
     #[track_caller]
     fn drain<R>(&mut self, range: R) -> Self::Drain<'_>
     where R: RangeBounds<usize>,
@@ -117,7 +118,7 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
         let range = Range { start, end };
         let _ = self.as_str()[range.clone()];
         let bytes = unsafe { self.as_mut_vec() };
-        Drain { inner: bytes.drain(range) }
+        Drain { drain: bytes.drain(range) }
     }
 
     fn clear(&mut self) {

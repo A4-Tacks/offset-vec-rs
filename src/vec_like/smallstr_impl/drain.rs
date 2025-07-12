@@ -1,35 +1,28 @@
-use core::iter::FusedIterator;
+use core::{iter::FusedIterator, str};
 
 use smallvec::Array;
 
 pub struct Drain<'a, A: Array<Item = u8>> {
-    pub(super) inner: smallvec::Drain<'a, A>,
+    pub(super) drain: smallvec::Drain<'a, A>,
 }
-
 impl<A: Array<Item = u8>> Iterator for Drain<'_, A> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut buf = [0; 4];
-        let mut i = 1;
 
-        buf[0] = self.inner.next()?;
+        buf[0] = self.drain.next()?;
+        let utf8_len = 1.max(buf[0].leading_ones() as usize);
 
-        loop {
-            match core::str::from_utf8(&buf[..i]) {
-                Ok(s) => return s.chars().next(),
-                Err(e) => {
-                    debug_assert_eq!(e.error_len(), None);
-                    buf[i] = self.inner.next().unwrap();
-                    i += 1;
-                },
-            }
+        for i in 1..utf8_len {
+            buf[i] = self.drain.next().unwrap();
         }
+
+        unsafe { str::from_utf8_unchecked(&buf[..utf8_len]) }.chars().next()
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.inner.len();
-
+        let len = self.drain.len();
         (len.div_ceil(4), Some(len))
     }
 }
@@ -38,20 +31,17 @@ impl<A: Array<Item = u8>> DoubleEndedIterator for Drain<'_, A> {
         let mut buf = [0; 4];
         let mut i = 3;
 
-        buf[3] = self.inner.next_back()?;
+        buf[i] = self.drain.next_back()?;
 
-        loop {
-            match core::str::from_utf8(&buf[i..]) {
-                Ok(s) => return s.chars().next(),
-                Err(e) => {
-                    debug_assert!(e.error_len().is_some(), "{:?}", e.error_len());
-                    i = i.checked_sub(1).unwrap();
-                    buf[i] = self.inner.next_back().unwrap();
-                },
-            }
+        while buf[i].leading_ones() == 1 {
+            i -= 1;
+            buf[i] = self.drain.next_back().unwrap();
         }
+
+        unsafe { str::from_utf8_unchecked(&buf[i..]) }.chars().next()
     }
 }
+
 impl<A: Array<Item = u8>> FusedIterator for Drain<'_, A> { }
 
 #[cfg(test)]
