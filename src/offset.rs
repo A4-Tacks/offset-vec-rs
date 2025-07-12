@@ -6,6 +6,7 @@ pub use check::*;
 
 use crate::{VecLike, OffsetVec};
 
+#[track_caller]
 pub fn create<V: VecLike>(vec: V, offset: usize) -> OffsetVec<V> {
     OffsetVec { vec, offset }.offset_check()
 }
@@ -116,11 +117,13 @@ impl Offset for String {
 
     #[track_caller]
     fn offset(self, i: usize) -> OffsetVec<Self::Output> {
+        let _ = &self[i..];
         create(self, i)
     }
 
     #[track_caller]
     fn offset_mut(&mut self, i: usize) -> OffsetVec<&mut Self::Output> {
+        let _ = &self[i..];
         create(self, i)
     }
 }
@@ -150,11 +153,13 @@ impl<A: smallvec::Array<Item = u8>> Offset for smallstr::SmallString<A> {
 
     #[track_caller]
     fn offset(self, i: usize) -> OffsetVec<Self::Output> {
+        let _ = &self[i..];
         create(self, i)
     }
 
     #[track_caller]
     fn offset_mut(&mut self, i: usize) -> OffsetVec<&mut Self::Output> {
+        let _ = &self[i..];
         create(self, i)
     }
 }
