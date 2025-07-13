@@ -76,6 +76,24 @@ impl<V: VecLike + IntoIterator> IntoIterator for OffsetVec<V> {
     }
 }
 
+impl<'a, V: VecLike + IntoIterator> IntoIterator for &'a OffsetVec<V> where &'a V::Slice: IntoIterator {
+    type Item = <&'a V::Slice as IntoIterator>::Item;
+    type IntoIter = <&'a V::Slice as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, V: VecLike + IntoIterator> IntoIterator for &'a mut OffsetVec<V> where &'a mut V::Slice: IntoIterator {
+    type Item = <&'a mut V::Slice as IntoIterator>::Item;
+    type IntoIter = <&'a mut V::Slice as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 impl<T, V: VecLike<Slice = [T]>> Borrow<[T]> for OffsetVec<V> {
     fn borrow(&self) -> &V::Slice {
         self
@@ -125,5 +143,11 @@ impl<V: VecLike> From<V> for OffsetVec<V> {
 impl<T, V: VecLike> Extend<T> for OffsetVec<V> where V::Collection: Extend<T> {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         self.vec.as_mut_collection().extend(iter);
+    }
+}
+
+impl<T, V: VecLike> FromIterator<T> for OffsetVec<V> where V: FromIterator<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        iter.into_iter().collect::<V>().into()
     }
 }

@@ -196,12 +196,42 @@ impl<V: VecLike> OffsetVec<V> {
         self
     }
 
+    /// Immutable iterator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let vec1 = vec.offset(2);
+    ///
+    /// let x: Vec<_> = vec1.iter().collect();
+    /// assert_eq!(x, [&2, &3, &4]);
+    /// ```
     pub fn iter<'a>(&'a self) -> <&'a V::Slice as IntoIterator>::IntoIter
     where &'a V::Slice: IntoIterator
     {
         self.as_slice().into_iter()
     }
 
+    /// Mutable iterator
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// let mut x: Vec<_> = vec1.iter_mut().collect();
+    /// assert_eq!(x, [&mut 2, &mut 3, &mut 4]);
+    /// *x[1] += 2;
+    ///
+    /// assert_eq!(vec1, [2, 5, 4]);
+    /// assert_eq!(vec, [0, 1, 2, 5, 4]);
+    /// ```
     pub fn iter_mut<'a>(&'a mut self) -> <&'a mut V::Slice as IntoIterator>::IntoIter
     where &'a mut V::Slice: IntoIterator
     {
