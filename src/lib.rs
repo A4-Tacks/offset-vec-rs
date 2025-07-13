@@ -210,7 +210,7 @@ impl<V: VecLike> OffsetVec<V> {
     }
 
     pub fn clear(&mut self) {
-        self.truncate(self.offset);
+        self.vec.truncate(self.offset);
     }
 
     #[track_caller]
