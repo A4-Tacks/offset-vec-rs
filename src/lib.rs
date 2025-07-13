@@ -202,8 +202,8 @@ impl<V: VecLike> OffsetVec<V> {
         self.as_slice().into_iter()
     }
 
-    pub fn iter_mut<'a>(&'a mut self) -> <&'a V::Slice as IntoIterator>::IntoIter
-    where &'a V::Slice: IntoIterator
+    pub fn iter_mut<'a>(&'a mut self) -> <&'a mut V::Slice as IntoIterator>::IntoIter
+    where &'a mut V::Slice: IntoIterator
     {
         self.as_mut_slice().into_iter()
     }
