@@ -13,6 +13,7 @@ use core::{
     slice::SliceIndex,
 };
 
+mod util;
 mod slice;
 mod offset;
 mod vec_like;
@@ -273,13 +274,20 @@ impl<V: VecLike> OffsetVec<V> {
     {
         self.vec.resize_with(new_len+self.offset, f);
     }
+
+    pub fn retain<F>(&mut self, mut f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        let i = self.vec.as_slice().transform_index(self.offset);
+
+        let mut i = 0..i;
+        self.vec.retain(|elem| {
+            i.next().is_some() || f(elem)
+        });
+    }
 }
 
 impl<V: VecLikeSolid> OffsetVec<V> {
-    pub fn retain<F: FnMut(&V::Elem) -> bool>(&mut self, mut f: F) {
-        self.retain_mut(|elem| f(&*elem));
-    }
-
     pub fn retain_mut<F: FnMut(&mut V::Elem) -> bool>(&mut self, mut f: F) {
         let mut i = 0..self.offset;
         self.vec.retain_mut(|elem| {
@@ -304,19 +312,6 @@ impl<V: VecLikeSolid> OffsetVec<V> {
         }
 
         self.vec.pop_if(predicate)
-    }
-}
-
-impl<V: VecLikeAbstract> OffsetVec<V> {
-    pub fn retain_val<F: FnMut(V::Elem) -> bool>(&mut self, mut f: F) {
-        let Some(i) = self.vec.elem_indices()
-            .position(|(i, _)| i >= self.offset)
-        else { return };
-
-        let mut i = 0..i;
-        self.vec.retain(|elem| {
-            i.next().is_some() || f(elem)
-        });
     }
 }
 

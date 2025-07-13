@@ -3,6 +3,7 @@ use super::*;
 
 impl<A: Array> VecLike for SmallVec<A> {
     type Elem = A::Item;
+    type ElemRef<'a> = &'a A::Item where Self: 'a;
     type Slice = [A::Item];
     type Collection = SmallVec<A>;
     type Drain<'a> = smallvec::Drain<'a, A> where Self: 'a;
@@ -97,6 +98,12 @@ impl<A: Array> VecLike for SmallVec<A> {
     #[track_caller]
     fn append(&mut self, other: &mut Self::Collection) {
         self.append(other);
+    }
+
+    fn retain<F>(&mut self, mut f: F)
+    where F: FnMut(&A::Item) -> bool,
+    {
+        self.retain(|elem| f(&*elem));
     }
 }
 impl<A: Array> VecLikeSolid for SmallVec<A> {

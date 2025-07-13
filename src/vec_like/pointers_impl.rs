@@ -7,6 +7,7 @@ mod unique_rc_impl;
 
 impl<V: VecLike> VecLike for &mut V {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -113,16 +114,16 @@ impl<V: VecLike> VecLike for &mut V {
     fn append(&mut self, other: &mut Self::Collection) {
         (**self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        (**self).retain(f);
+    }
 }
 impl<V: VecLikeSolid> VecLikeSolid for &mut V {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         (**self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        (**self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -140,6 +141,7 @@ impl<V: VecLikeSolid> VecLikeSolid for &mut V {
 
 impl<V: VecLike> VecLike for Box<V> {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -246,16 +248,16 @@ impl<V: VecLike> VecLike for Box<V> {
     fn append(&mut self, other: &mut Self::Collection) {
         (**self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        (**self).retain(f);
+    }
 }
 impl<V: VecLikeSolid> VecLikeSolid for Box<V> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         (**self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        (**self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -273,6 +275,7 @@ impl<V: VecLikeSolid> VecLikeSolid for Box<V> {
 
 impl<V: VecLike + Clone> VecLike for Rc<V> {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -379,16 +382,16 @@ impl<V: VecLike + Clone> VecLike for Rc<V> {
     fn append(&mut self, other: &mut Self::Collection) {
         Self::make_mut(self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        Self::make_mut(self).retain(f);
+    }
 }
 impl<V: VecLikeSolid + Clone> VecLikeSolid for Rc<V> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         Self::make_mut(self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        Self::make_mut(self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -406,6 +409,7 @@ impl<V: VecLikeSolid + Clone> VecLikeSolid for Rc<V> {
 
 impl<V: VecLike + Clone> VecLike for Arc<V> {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -512,16 +516,16 @@ impl<V: VecLike + Clone> VecLike for Arc<V> {
     fn append(&mut self, other: &mut Self::Collection) {
         Self::make_mut(self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        Self::make_mut(self).retain(f);
+    }
 }
 impl<V: VecLikeSolid + Clone> VecLikeSolid for Arc<V> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         Self::make_mut(self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        Self::make_mut(self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -542,6 +546,7 @@ where S: ToOwned + Slice,
       S::Owned: VecLike<Slice = S>,
 {
     type Elem = <S::Owned as VecLike>::Elem;
+    type ElemRef<'a> = <S::Owned as VecLike>::ElemRef<'a> where Self: 'a;
     type Slice = <S::Owned as VecLike>::Slice;
     type Collection = <S::Owned as VecLike>::Collection;
     type Drain<'a> = <S::Owned as VecLike>::Drain<'a> where Self: 'a;
@@ -651,6 +656,12 @@ where S: ToOwned + Slice,
     fn append(&mut self, other: &mut Self::Collection) {
         self.to_mut().append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(<S::Owned as VecLike>::ElemRef<'_>) -> bool,
+    {
+        self.to_mut().retain(f);
+    }
 }
 impl<S> VecLikeSolid for Cow<'_, S>
 where S: ToOwned + Slice,
@@ -658,12 +669,6 @@ where S: ToOwned + Slice,
 {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         self.to_mut().swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        self.to_mut().retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)

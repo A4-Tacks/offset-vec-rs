@@ -4,6 +4,7 @@ use super::*;
 
 impl<T> VecLike for RcVec<T> {
     type Elem = T;
+    type ElemRef<'a> = &'a T where Self: 'a;
     type Slice = [T];
     type Collection = RcVec<T>;
     type Drain<'a> = RcVecDrain<'a, T> where Self: 'a;
@@ -109,16 +110,16 @@ impl<T> VecLike for RcVec<T> {
     fn append(&mut self, other: &mut Self::Collection) {
         self.append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(&T) -> bool,
+    {
+        self.retain(f);
+    }
 }
 impl<T> VecLikeSolid for RcVec<T> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         self.swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        self.retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -136,6 +137,7 @@ impl<T> VecLikeSolid for RcVec<T> {
 
 impl<T> VecLike for ArcVec<T> {
     type Elem = T;
+    type ElemRef<'a> = &'a T where Self: 'a;
     type Slice = [T];
     type Collection = ArcVec<T>;
     type Drain<'a> = ArcVecDrain<'a, T> where Self: 'a;
@@ -241,16 +243,16 @@ impl<T> VecLike for ArcVec<T> {
     fn append(&mut self, other: &mut Self::Collection) {
         self.append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(&T) -> bool,
+    {
+        self.retain(f);
+    }
 }
 impl<T> VecLikeSolid for ArcVec<T> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         self.swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        self.retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)

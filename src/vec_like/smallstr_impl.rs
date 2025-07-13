@@ -8,6 +8,7 @@ use drain::*;
 
 impl<A: Array<Item = u8>> VecLike for SmallString<A> {
     type Elem = char;
+    type ElemRef<'a> = char where Self: 'a;
     type Slice = str;
     type Collection = Self;
     type Drain<'a> = Drain<'a, A> where A: 'a;
@@ -129,17 +130,10 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
     fn append(&mut self, other: &mut Self::Collection) {
         self.push_str(other)
     }
-}
-impl<A: Array<Item = u8>> VecLikeAbstract for SmallString<A> {
-    type Indices<'a> = core::str::CharIndices<'a> where A: 'a;
 
     fn retain<F>(&mut self, f: F)
     where F: FnMut(Self::Elem) -> bool,
     {
         self.retain(f);
-    }
-
-    fn elem_indices(&self) -> Self::Indices<'_> {
-        self.char_indices()
     }
 }

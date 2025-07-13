@@ -23,6 +23,7 @@ macro_rules! noop {
 
 pub trait VecLike {
     type Elem;
+    type ElemRef<'a> where Self: 'a;
     type Slice: ?Sized + Slice;
     type Collection: FromIterator<Self::Elem>;
     type Drain<'a>: Iterator<Item = Self::Elem> where Self: 'a;
@@ -74,16 +75,13 @@ pub trait VecLike {
 
     fn resize_with<F>(&mut self, new_len: usize, f: F)
     where F: FnMut() -> Self::Elem,;
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(Self::ElemRef<'_>) -> bool,;
 }
 
 pub trait VecLikeSolid: VecLike {
     fn swap_remove(&mut self, index: usize) -> Self::Elem;
-
-    fn retain<F>(&mut self, mut f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        self.retain_mut(|elem| f(&*elem));
-    }
 
     fn retain_mut<F>(&mut self, f: F)
     where F: FnMut(&mut Self::Elem) -> bool,;
@@ -101,13 +99,4 @@ pub trait VecLikeSolid: VecLike {
     //fn dedup_by<F>(&mut self, same_bucket: F)
     //where
     //    F: FnMut(&mut Self::Elem, &mut Self::Elem) -> bool,;
-}
-
-pub trait VecLikeAbstract: VecLike {
-    type Indices<'a>: Iterator<Item = (usize, Self::Elem)> where Self: 'a;
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(Self::Elem) -> bool,;
-
-    fn elem_indices(&self) -> Self::Indices<'_>;
 }

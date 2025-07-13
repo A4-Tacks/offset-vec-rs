@@ -1,9 +1,10 @@
-use core::{iter::{repeat_n, repeat_with}, ops::RangeBounds, str::CharIndices};
+use core::{iter::{repeat_n, repeat_with}, ops::RangeBounds};
 use alloc::string::{Drain, String};
 use super::*;
 
 impl VecLike for String {
     type Elem = char;
+    type ElemRef<'a> = char where Self: 'a;
     type Slice = str;
     type Collection = String;
     type Drain<'a> = Drain<'a>;
@@ -120,17 +121,10 @@ impl VecLike for String {
     fn append(&mut self, other: &mut Self::Collection) {
         self.push_str(other)
     }
-}
-impl VecLikeAbstract for String {
-    type Indices<'a> = CharIndices<'a>;
 
     fn retain<F>(&mut self, f: F)
     where F: FnMut(Self::Elem) -> bool,
     {
         self.retain(f);
-    }
-
-    fn elem_indices(&self) -> Self::Indices<'_> {
-        self.char_indices()
     }
 }

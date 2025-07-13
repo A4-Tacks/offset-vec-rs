@@ -4,6 +4,7 @@ use super::*;
 
 impl<T> VecLike for Vec<T> {
     type Elem = T;
+    type ElemRef<'a> = &'a T where Self: 'a;
     type Slice = [T];
     type Collection = Vec<T>;
     type Drain<'a> = Drain<'a, T> where Self: 'a;
@@ -109,16 +110,16 @@ impl<T> VecLike for Vec<T> {
     fn append(&mut self, other: &mut Self::Collection) {
         self.append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(&T) -> bool,
+    {
+        self.retain(f);
+    }
 }
 impl<T> VecLikeSolid for Vec<T> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         self.swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        self.retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)

@@ -3,6 +3,7 @@ use super::*;
 
 impl<V: VecLike> VecLike for UniqRc<V> {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -109,16 +110,16 @@ impl<V: VecLike> VecLike for UniqRc<V> {
     fn append(&mut self, other: &mut Self::Collection) {
         (**self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        (**self).retain(f);
+    }
 }
 impl<V: VecLikeSolid> VecLikeSolid for UniqRc<V> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         (**self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        (**self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
@@ -136,6 +137,7 @@ impl<V: VecLikeSolid> VecLikeSolid for UniqRc<V> {
 
 impl<V: VecLike> VecLike for UniqArc<V> {
     type Elem = V::Elem;
+    type ElemRef<'a> = V::ElemRef<'a> where Self: 'a;
     type Slice = V::Slice;
     type Collection = V::Collection;
     type Drain<'a> = V::Drain<'a> where Self: 'a;
@@ -242,16 +244,16 @@ impl<V: VecLike> VecLike for UniqArc<V> {
     fn append(&mut self, other: &mut Self::Collection) {
         (**self).append(other);
     }
+
+    fn retain<F>(&mut self, f: F)
+    where F: FnMut(V::ElemRef<'_>) -> bool,
+    {
+        (**self).retain(f);
+    }
 }
 impl<V: VecLikeSolid> VecLikeSolid for UniqArc<V> {
     fn swap_remove(&mut self, index: usize) -> Self::Elem {
         (**self).swap_remove(index)
-    }
-
-    fn retain<F>(&mut self, f: F)
-    where F: FnMut(&Self::Elem) -> bool,
-    {
-        (**self).retain(f);
     }
 
     fn retain_mut<F>(&mut self, f: F)
