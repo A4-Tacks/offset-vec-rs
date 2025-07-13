@@ -14,8 +14,8 @@ impl<A: Array<Item = u8>> Iterator for Drain<'_, A> {
         buf[0] = self.drain.next()?;
         let utf8_len = 1.max(buf[0].leading_ones() as usize);
 
-        for i in 1..utf8_len {
-            buf[i] = self.drain.next().unwrap();
+        for byte in &mut buf[1..utf8_len] {
+            *byte = self.drain.next().unwrap();
         }
 
         unsafe { str::from_utf8_unchecked(&buf[..utf8_len]) }.chars().next()
