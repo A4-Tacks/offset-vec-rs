@@ -99,26 +99,98 @@ where V: VecLike,
 }
 
 impl<V: VecLike> OffsetVec<V> {
+    /// Get original vector
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4]);
+    /// assert_eq!(vec1.origin_vec(), &&mut vec![0, 1, 2, 3, 4]);
+    /// ```
     #[inline]
     pub fn origin_vec(&self) -> &V {
         &self.vec
     }
 
+    /// Get mutable original vector
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4]);
+    /// assert_eq!(vec1.origin_vec_mut(), &mut &mut vec![0, 1, 2, 3, 4]);
+    ///
+    /// vec1.origin_vec_mut()[3] += 2;
+    /// assert_eq!(vec1, [2, 5, 4]);
+    /// ```
     #[inline]
     pub fn origin_vec_mut(&mut self) -> &mut V {
         &mut self.vec
     }
 
+    /// Consume [`OffsetVec`] into packed original vector
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4]);
+    /// assert_eq!(vec1.into_origin_vec(), vec![0, 1, 2, 3, 4]);
+    /// ```
     #[inline]
     pub fn into_origin_vec(self) -> V {
         self.vec
     }
 
+    /// Extracts a slice containing the offset vector.
+    ///
+    /// Equivalent to &s[..].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(vec1.as_slice(), &[2, 3, 4]);
+    /// assert_eq!(&vec1[..], &[2, 3, 4]);
+    /// ```
     #[inline]
     pub fn as_slice(&self) -> &V::Slice {
         self
     }
 
+    /// Extracts a mutable slice containing the offset vector.
+    ///
+    /// Equivalent to &mut s[..].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(vec1.as_mut_slice(), &mut [2, 3, 4]);
+    /// assert_eq!(&mut vec1[..], &mut [2, 3, 4]);
+    /// ```
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut V::Slice {
         self
@@ -136,16 +208,44 @@ impl<V: VecLike> OffsetVec<V> {
         self.as_mut_slice().into_iter()
     }
 
+    /// `self.len() == 0`
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    /// Get offset vector length
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(vec1.len(), 3);
+    /// assert_eq!(vec1.origin_vec().len(), 5);
+    /// ```
     #[inline]
     pub fn len(&self) -> usize {
         self.vec.len() - self.offset
     }
 
+    /// Get offset vector capacity
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = Vec::with_capacity(5);
+    /// vec.extend([0, 1, 2, 3, 4]);
+    /// let mut vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(3, vec1.capacity());
+    /// assert_eq!(5, vec1.origin_vec().capacity());
+    /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
         self.vec.capacity() - self.offset
@@ -167,14 +267,65 @@ impl<V: VecLike> OffsetVec<V> {
         self.vec.shrink_to(min_capacity);
     }
 
+    /// Get offset
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let vec = vec![0, 1, 2, 3, 4];
+    /// let vec1 = vec.offset(2);
+    ///
+    /// assert_eq!(vec1.origin_offset(), 2);
+    ///
+    /// let vec2 = vec1.offset(1);
+    /// assert_eq!(vec2.origin_offset(), 3);
+    /// ```
     pub fn origin_offset(&self) -> usize {
         self.offset
     }
 
+    /// Push a value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4]);
+    /// vec1.push(5);
+    /// assert_eq!(vec1, [2, 3, 4, 5]);
+    /// assert_eq!(vec, [0, 1, 2, 3, 4, 5]);
+    /// ```
     pub fn push(&mut self, value: V::Elem) {
         self.vec.push(value);
     }
 
+    /// Pop a value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3]);
+    /// assert_eq!(vec1.pop(), Some(3));
+    /// assert_eq!(vec1, [2]);
+    /// assert_eq!(vec1.pop(), Some(2));
+    /// assert_eq!(vec1, []);
+    /// assert_eq!(vec1.pop(), None);
+    /// assert_eq!(vec1, []);
+    ///
+    /// assert_eq!(vec1.origin_vec(), &&mut [0, 1]);
+    /// assert_eq!(vec, [0, 1]);
+    /// ```
     pub fn pop(&mut self) -> Option<V::Elem> {
         if self.is_empty() {
             return None;
@@ -183,6 +334,22 @@ impl<V: VecLike> OffsetVec<V> {
         self.vec.pop()
     }
 
+    /// Remove a value at index, shifting all elements after it to the left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4, 5];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4, 5]);
+    /// assert_eq!(vec1.remove(1), 3);
+    /// assert_eq!(vec1, [2, 4, 5]);
+    ///
+    /// assert_eq!(vec, [0, 1, 2, 4, 5]);
+    /// ```
     #[track_caller]
     pub fn remove(&mut self, index: usize) -> V::Elem {
         let len = self.len();
@@ -192,6 +359,24 @@ impl<V: VecLike> OffsetVec<V> {
         self.vec.remove(index + self.offset)
     }
 
+    /// Insert a value before index, shifting all elements after it to the right.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 4, 5];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 4, 5]);
+    /// vec1.insert(1, 3);
+    /// assert_eq!(vec1, [2, 3, 4, 5]);
+    /// vec1.insert(4, 6);
+    /// assert_eq!(vec1, [2, 3, 4, 5, 6]);
+    ///
+    /// assert_eq!(vec, [0, 1, 2, 3, 4, 5, 6]);
+    /// ```
     #[track_caller]
     pub fn insert(&mut self, index: usize, elem: V::Elem) {
         let len = self.len();
@@ -201,14 +386,66 @@ impl<V: VecLike> OffsetVec<V> {
         self.vec.insert(index + self.offset, elem)
     }
 
+    /// Truncate to length
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4, 5];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4, 5]);
+    ///
+    /// vec1.truncate(2);
+    ///
+    /// assert_eq!(vec1, [2, 3]);
+    /// assert_eq!(vec, [0, 1, 2, 3]);
+    /// ```
     pub fn truncate(&mut self, len: usize) {
         self.vec.truncate(len + self.offset);
     }
 
+    /// Append and clear other collection
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3];
+    /// let mut vec1 = vec.offset_mut(2);
+    /// let mut other = vec![4, 5];
+    ///
+    /// assert_eq!(vec1, [2, 3]);
+    /// vec1.append(&mut other);
+    ///
+    /// assert_eq!(other, []);
+    /// assert_eq!(vec1, [2, 3, 4, 5]);
+    /// assert_eq!(vec, [0, 1, 2, 3, 4, 5]);
+    /// ```
     pub fn append(&mut self, other: &mut V::Collection) {
         self.vec.append(other);
     }
 
+    /// Clear all elements (offset)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4]);
+    ///
+    /// vec1.clear();
+    ///
+    /// assert_eq!(vec1, []);
+    /// assert_eq!(vec, [0, 1]);
+    /// ```
     pub fn clear(&mut self) {
         self.vec.truncate(self.offset);
     }
@@ -247,11 +484,47 @@ impl<V: VecLike> OffsetVec<V> {
         Range { start: start+offset, end: end+offset }
     }
 
+    /// Drain range elements
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4, 5, 6];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4, 5, 6]);
+    ///
+    /// let drain = vec1.drain(2..4).collect::<Vec<_>>();
+    ///
+    /// assert_eq!(drain, [4, 5]);
+    /// assert_eq!(vec1, [2, 3, 6]);
+    /// assert_eq!(vec, [0, 1, 2, 3, 6]);
+    /// ```
     #[track_caller]
     pub fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> V::Drain<'_> {
         self.vec.drain(self.map_range(range))
     }
 
+    /// Splits the collection into two at the given index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use offset_vec::Offset;
+    ///
+    /// let mut vec = vec![0, 1, 2, 3, 4, 5, 6];
+    /// let mut vec1 = vec.offset_mut(2);
+    ///
+    /// assert_eq!(vec1, [2, 3, 4, 5, 6]);
+    ///
+    /// let other = vec1.split_off(3);
+    ///
+    /// assert_eq!(other, [5, 6]);
+    /// assert_eq!(vec1, [2, 3, 4]);
+    /// assert_eq!(vec, [0, 1, 2, 3, 4]);
+    /// ```
     #[track_caller]
     #[must_use = "use `.truncate()` if you don't need the other half"]
     pub fn split_off(&mut self, at: usize) -> V::Collection {
