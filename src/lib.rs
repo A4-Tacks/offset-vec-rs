@@ -167,8 +167,7 @@ impl<V: VecLike> OffsetVec<V> {
         self.vec.shrink_to(min_capacity);
     }
 
-
-    pub fn offset(&self) -> usize {
+    pub fn origin_offset(&self) -> usize {
         self.offset
     }
 
