@@ -1,17 +1,14 @@
 use core::{iter::{repeat_n, repeat_with}, ops::{Bound, Range, RangeBounds}};
-use smallstr::SmallString;
+use smallstr::{SmallString, DrainRange};
 use smallvec::Array;
 use super::*;
-
-mod drain;
-use drain::*;
 
 impl<A: Array<Item = u8>> VecLike for SmallString<A> {
     type Elem = char;
     type ElemRef<'a> = char where Self: 'a;
     type Slice = str;
     type Collection = Self;
-    type Drain<'a> = Drain<'a, A> where A: 'a;
+    type Drain<'a> = DrainRange<'a, A> where A: 'a;
 
     #[inline]
     fn len(&self) -> usize {
@@ -118,8 +115,7 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
         };
         let range = Range { start, end };
         let _ = self.as_str()[range.clone()];
-        let bytes = unsafe { self.as_mut_vec() };
-        Drain { drain: bytes.drain(range) }
+        self.drain_range(range)
     }
 
     fn clear(&mut self) {
@@ -135,5 +131,83 @@ impl<A: Array<Item = u8>> VecLike for SmallString<A> {
     where F: FnMut(Self::Elem) -> bool,
     {
         self.retain(f);
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use alloc::string::String;
+    use smallstr::SmallString;
+    use crate::VecLike;
+
+    #[test]
+    fn test() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("foobar");
+        assert_eq!(s, "foobar");
+        let s1: String = VecLike::drain(&mut s, 1..=3).collect();
+        assert_eq!(s1, "oob");
+        assert_eq!(s, "far");
+    }
+
+    #[test]
+    fn test_rev() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("foobar");
+        assert_eq!(s, "foobar");
+        let s1: String = VecLike::drain(&mut s, 1..=3).rev().collect();
+        assert_eq!(s1, "boo");
+        assert_eq!(s, "far");
+    }
+
+    #[test]
+    fn test_empty() {
+        let mut s: SmallString<[u8; 0]> = SmallString::new();
+        assert_eq!(s, "");
+        let s1: String = VecLike::drain(&mut s, 0..0).collect();
+        assert_eq!(s1, "");
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn test_multi_bytes() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("从前有座山");
+        assert_eq!(s, "从前有座山");
+        let s1: String = VecLike::drain(&mut s, 6..12).collect();
+        assert_eq!(s1, "有座");
+        assert_eq!(s, "从前山");
+    }
+
+    #[test]
+    fn test_multi_bytes_rev() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("从前有座山");
+        assert_eq!(s, "从前有座山");
+        let s1: String = VecLike::drain(&mut s, 6..12).rev().collect();
+        assert_eq!(s1, "座有");
+        assert_eq!(s, "从前山");
+    }
+
+    #[test]
+    fn some_consume() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("foobar");
+        assert_eq!(s, "foobar");
+        let ch = VecLike::drain(&mut s, 1..=3).next();
+        assert_eq!(ch, Some('o'));
+        assert_eq!(s, "far");
+    }
+
+    #[test]
+    fn no_consume() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("foobar");
+        assert_eq!(s, "foobar");
+        VecLike::drain(&mut s, 1..=3);
+        assert_eq!(s, "far");
+    }
+
+    #[test]
+    fn size_hint() {
+        let mut s: SmallString<[u8; 0]> = SmallString::from_str("foobar");
+        assert_eq!(s, "foobar");
+        let size_hint = VecLike::drain(&mut s, 1..=3).size_hint();
+        assert_eq!(size_hint, (1, Some(3)));
     }
 }
